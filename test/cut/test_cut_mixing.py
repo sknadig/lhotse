@@ -1,11 +1,10 @@
-from lhotse.utils import nullcontext as does_not_raise
+import pytest
 from math import isclose
 
-import pytest
-
-from lhotse.cut import CutSet, MixedCut
+from lhotse.cut import CutSet, MixTrack, MixedCut
 from lhotse.supervision import SupervisionSegment
-from lhotse.testing.dummies import remove_spaces_from_segment_text
+from lhotse.testing.dummies import dummy_cut, remove_spaces_from_segment_text
+from lhotse.utils import nullcontext as does_not_raise
 
 
 # Note:
@@ -89,3 +88,21 @@ def test_mixed_cut_load_audio_mixed(mixed_audio_cut):
 def test_mixed_cut_load_audio_unmixed(mixed_audio_cut):
     audio = mixed_audio_cut.load_audio(mixed=False)
     assert audio.shape == (2, 230400)
+
+
+def test_mix_snr_adds_properly():
+    mixed_cut = MixedCut(
+        id='mc1',
+        tracks=[
+            MixTrack(cut=dummy_cut()),
+            MixTrack(cut=dummy_cut(), snr=10),
+        ]
+    )
+    mixed_twice_cut = mixed_cut.mix(mixed_cut, snr=15)
+    assert len(mixed_twice_cut.tracks) == 4
+    # first the tracks unaffected by snr=15 in mix()
+    assert mixed_twice_cut.tracks[0].snr is None
+    assert mixed_twice_cut.tracks[1].snr == 10
+    # then the tracks affected by snr=15 in mix()
+    assert mixed_twice_cut.tracks[2].snr == 15
+    assert mixed_twice_cut.tracks[3].snr == 25

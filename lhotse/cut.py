@@ -1656,13 +1656,13 @@ def mix(
                 cut=track.cut,
                 offset=round(track.offset + offset, ndigits=3),
                 snr=(
-                    # When both new and previous SNR were specified, assign their sum,
-                    # as the SNR for each track is defined with regard to the first track energy.
-                    track.snr + snr if snr is not None and track is not None
                     # When no new SNR is specified, retain whatever was there in the first place.
-                    else track.snr if snr is None
+                    track.snr if snr is None
                     # When new SNR is specified but none was specified before, assign the new SNR value.
                     else snr if track.snr is None
+                    # When both new and previous SNR were specified, assign their sum,
+                    # as the SNR for each track is defined with regard to the first track energy.
+                    else track.snr + snr if snr is not None and track is not None
                     # When no SNR was specified whatsoever, use none.
                     else None
                 )
