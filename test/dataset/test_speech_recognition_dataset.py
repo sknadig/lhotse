@@ -37,7 +37,7 @@ def test_k2_speech_recognition_iterable_dataset(k2_cut_set, num_workers):
     # one cut with two supervisions + 3 three cuts with one supervision
     assert (batch['supervisions']['sequence_idx'] == tensor([0, 1, 2, 3, 3])).all()
     assert batch['supervisions']['text'] == ['IN EIGHTEEN THIRTEEN'] * 5  # a list, not tensor
-    assert (batch['supervisions']['start_frame'] == tensor([0] * 4 + [154])).all()
+    assert (batch['supervisions']['start_frame'] == tensor([0] * 4 + [153])).all()
     assert (batch['supervisions']['num_frames'] == tensor([154] * 5)).all()
 
 
@@ -56,7 +56,7 @@ def test_k2_speech_recognition_iterable_dataset_multiple_workers(k2_cut_set, num
     text = [t for b in batches for t in b['supervisions']['text']]
     assert text == ['IN EIGHTEEN THIRTEEN'] * 5  # a list, not tensor
     start_frame = torch.cat([b['supervisions']['start_frame'] for b in batches])
-    assert (start_frame == tensor([0] * 4 + [154])).all()
+    assert (start_frame == tensor([0] * 4 + [153])).all()
     num_frames = torch.cat([b['supervisions']['num_frames'] for b in batches])
     assert (num_frames == tensor([154] * 5)).all()
 

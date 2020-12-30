@@ -1644,10 +1644,12 @@ class CutSet(JsonMixin, YamlMixin, Sequence[AnyCut]):
             and returns a single cut instance.
         :return: a new ``CutSet`` with modified cuts.
         """
+
         def verified(mapped: Any) -> AnyCut:
             assert isinstance(mapped, (Cut, MixedCut, PaddingCut)), \
                 "The callable passed to CutSet.map() must return a Cut class instance."
             return mapped
+
         return CutSet.from_cuts(verified(transform_fn(c)) for c in self)
 
     def modify_ids(self, transform_fn: Callable[[str], str]) -> 'CutSet':
@@ -1795,7 +1797,7 @@ def mix(
         [
             MixTrack(
                 cut=track.cut,
-                offset=round(track.offset + offset, ndigits=3),
+                offset=round(track.offset + offset, ndigits=8),
                 snr=(
                     # When no new SNR is specified, retain whatever was there in the first place.
                     track.snr if snr is None
