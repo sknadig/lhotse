@@ -1,15 +1,14 @@
-from math import isclose
-from typing import Dict
+from typing import Callable, Dict, Sequence
 
 import torch
-from torch.utils.data import Dataset
 
+from lhotse import validate
 from lhotse.cut import CutSet
+from lhotse.dataset.input_strategies import BatchIO, PrecomputedFeatures
+from lhotse.utils import ifnone
 
-EPS = 1e-8
 
-
-class VadDataset(Dataset):
+class VadDataset(torch.utils.data.Dataset):
     """
     The PyTorch Dataset for the voice activity detection task.
     Each item in this dataset is a dict of:
@@ -17,33 +16,35 @@ class VadDataset(Dataset):
     .. code-block::
 
         {
-            'features': (T x F) tensor
+            'inputs': (B x T x F) tensor
+            'input_lens': (B,) tensor
             'is_voice': (T x 1) tensor
+            'cut': List[Cut]
         }
     """
 
     def __init__(
-            self,
-            cuts: CutSet,
-    ):
+        self,
+        input_strategy: BatchIO = PrecomputedFeatures(),
+        cut_transforms: Sequence[Callable[[CutSet], CutSet]] = None,
+        input_transforms: Sequence[Callable[[torch.Tensor], torch.Tensor]] = None,
+    ) -> None:
         super().__init__()
-        self.cuts = cuts
-        self.cut_ids = list(cuts.ids)
+        self.input_strategy = input_strategy
+        self.cut_transforms = ifnone(cut_transforms, [])
+        self.input_transforms = ifnone(input_transforms, [])
 
-    def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
-        cut_id = self.cut_ids[idx]
-        cut = self.cuts[cut_id]
-
-        features = torch.from_numpy(cut.load_features())
-        assert features.shape[0] == cut.num_frames
-        assert isclose(cut.num_frames * cut.frame_shift, cut.duration)
-
-        is_voice = torch.from_numpy(cut.supervisions_feature_mask())
-
+    def __getitem__(self, cuts: CutSet) -> Dict[str, torch.Tensor]:
+        validate(cuts)
+        cuts = cuts.sort_by_duration()
+        for tfnm in self.cut_transforms:
+            cuts = tfnm(cuts)
+        inputs, input_lens = self.input_strategy(cuts)
+        for tfnm in self.input_transforms:
+            inputs = tfnm(inputs)
         return {
-            'features': features,
-            'is_voice': is_voice
+            "inputs": inputs,
+            "input_lens": input_lens,
+            "is_voice": self.input_strategy.supervision_masks(cuts),
+            "cut": cuts,
         }
-
-    def __len__(self) -> int:
-        return len(self.cut_ids)

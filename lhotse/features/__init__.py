@@ -1,36 +1,51 @@
 from .base import (
     FeatureExtractor,
+    Features,
     FeatureSet,
     FeatureSetBuilder,
-    Features,
     create_default_feature_extractor,
 )
-from .fbank import (
-    Fbank,
-    FbankConfig
-)
+from .fbank import TorchaudioFbank, TorchaudioFbankConfig
 from .io import (
-    FeaturesWriter,
+    ChunkedLilcomHdf5Reader,
+    ChunkedLilcomHdf5Writer,
     FeaturesReader,
-    LilcomFilesWriter,
+    FeaturesWriter,
+    KaldiReader,
+    LilcomChunkyReader,
+    LilcomChunkyWriter,
     LilcomFilesReader,
-    LilcomHdf5Writer,
+    LilcomFilesWriter,
     LilcomHdf5Reader,
-    NumpyHdf5Writer,
-    NumpyHdf5Reader,
-    NumpyFilesWriter,
+    LilcomHdf5Writer,
+    LilcomURLReader,
+    LilcomURLWriter,
     NumpyFilesReader,
+    NumpyFilesWriter,
+    NumpyHdf5Reader,
+    NumpyHdf5Writer,
     available_storage_backends,
-    close_cached_file_handles
+    close_cached_file_handles,
 )
-from .mfcc import (
+from .kaldi.extractors import (
+    Fbank,
+    FbankConfig,
+    LogSpectrogram,
+    LogSpectrogramConfig,
     Mfcc,
-    MfccConfig
-)
-from .mixer import (
-    FeatureMixer
-)
-from .spectrogram import (
+    MfccConfig,
     Spectrogram,
-    SpectrogramConfig
+    SpectrogramConfig,
 )
+from .kaldifeat import (
+    KaldifeatFbank,
+    KaldifeatFbankConfig,
+    KaldifeatMfcc,
+    KaldifeatMfccConfig,
+)
+from .librosa_fbank import LibrosaFbank, LibrosaFbankConfig
+from .mfcc import TorchaudioMfcc, TorchaudioMfccConfig
+from .mixer import FeatureMixer
+from .opensmile import OpenSmileConfig, OpenSmileExtractor
+from .spectrogram import TorchaudioSpectrogram, TorchaudioSpectrogramConfig
+from .ssl import S3PRLSSL, S3PRLSSLConfig

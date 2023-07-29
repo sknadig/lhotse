@@ -4,11 +4,22 @@
     "start": 0.0,
     "duration": 10.0,
     "channel": 0,
-    "supervisions": [],
+    "supervisions": [
+      {
+        "id": "sup-1",
+        "recording_id": "recording-1",
+        "start": 0,
+        "duration": 10.0,
+        "channel": 0,
+        "text": "EXAMPLE OF TEXT",
+        "speaker": "libri-spk1"
+      }
+    ],
     "features": {
       "type": "fbank",
       "num_frames": 1604,
       "num_features": 40,
+      "frame_shift": 0.01,
       "sampling_rate": 16000,
       "start": 0,
       "duration": 16.04,
@@ -33,6 +44,6 @@
       "num_samples": 256640,
       "duration": 16.04
     },
-    "type": "Cut"
+    "type": "MonoCut"
   }
 ]

@@ -2,7 +2,7 @@
   {
     "id": "33ef3990-f39f-4aee-8dd4-f1cbd89c3041",
     "start": 0,
-    "duration": 1.54,
+    "duration": 1.5396371882086168,
     "channel": 0,
     "supervisions": [
       {
@@ -18,15 +18,15 @@
     ],
     "features": {
       "type": "fbank",
-      "num_frames": 154,
-      "num_features": 80,
+      "num_frames": 77,
+      "num_features": 40,
+      "frame_shift": 0.02,
       "sampling_rate": 22050,
-      "storage_type": "lilcom_files",
-      "storage_path": "test/fixtures/ljspeech/storage",
-      "storage_key": "ebc3b975-d9f7-485c-9a33-136f984f032e.llc",
       "start": 0,
-      "duration": 1.54,
-      "recording_id": "LJ002-0020",
+      "duration": 1.53963719,
+      "storage_type": "lilcom_files",
+      "storage_path": "test/fixtures/ljspeech/feats",
+      "storage_key": "5bb/5bb52a3d-aaf6-42ff-8891-2be7852a4858.llc",
       "channels": 0
     },
     "recording": {
@@ -44,12 +44,12 @@
       "num_samples": 33949,
       "duration": 1.5396371882086168
     },
-    "type": "Cut"
+    "type": "MonoCut"
   },
   {
     "id": "d9145a74-749e-489a-b3d5-653e047bd274",
     "start": 0,
-    "duration": 1.6,
+    "duration": 1.5976870748299319,
     "channel": 0,
     "supervisions": [
       {
@@ -65,15 +65,15 @@
     ],
     "features": {
       "type": "fbank",
-      "num_frames": 160,
-      "num_features": 80,
+      "num_frames": 80,
+      "num_features": 40,
+      "frame_shift": 0.02,
       "sampling_rate": 22050,
-      "storage_type": "lilcom_files",
-      "storage_path": "test/fixtures/ljspeech/storage",
-      "storage_key": "c384489b-5efb-4a3d-b94f-74e3691c442f.llc",
       "start": 0,
-      "duration": 1.6,
-      "recording_id": "LJ002-0035",
+      "duration": 1.59768707,
+      "storage_type": "lilcom_files",
+      "storage_path": "test/fixtures/ljspeech/feats",
+      "storage_key": "d39/d39cf273-a42d-433a-a63c-ba6357f1669e.llc",
       "channels": 0
     },
     "recording": {
@@ -91,6 +91,6 @@
       "num_samples": 35229,
       "duration": 1.5976870748299319
     },
-    "type": "Cut"
+    "type": "MonoCut"
   }
 ]

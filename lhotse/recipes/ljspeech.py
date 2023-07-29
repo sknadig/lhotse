@@ -16,39 +16,41 @@ import tarfile
 from pathlib import Path
 from typing import Dict, Optional, Union
 
+from lhotse import validate_recordings_and_supervisions
 from lhotse.audio import Recording, RecordingSet
 from lhotse.features import Fbank
 from lhotse.features.base import TorchaudioFeatureExtractor
 from lhotse.supervision import SupervisionSegment, SupervisionSet
-from lhotse.utils import Pathlike, fastcopy, urlretrieve_progress
+from lhotse.utils import Pathlike, fastcopy, resumable_download, safe_extract
 
 
-def download_and_untar(
-        target_dir: Pathlike = '.',
-        force_download: Optional[bool] = False
-) -> None:
+def download_ljspeech(
+    target_dir: Pathlike = ".", force_download: Optional[bool] = False
+) -> Path:
     target_dir = Path(target_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
-    dataset_name = 'LJSpeech-1.1'
-    tar_path = target_dir / f'{dataset_name}.tar.bz2'
-    if force_download or not tar_path.is_file():
-        urlretrieve_progress(
-            f'http://data.keithito.com/data/speech/{dataset_name}.tar.bz2',
-            filename=tar_path,
-            desc='Downloading LJSpeech'
-        )
+    dataset_name = "LJSpeech-1.1"
+    tar_path = target_dir / f"{dataset_name}.tar.bz2"
     corpus_dir = target_dir / dataset_name
-    completed_detector = corpus_dir / '.completed'
-    if not completed_detector.is_file():
-        shutil.rmtree(corpus_dir, ignore_errors=True)
-        with tarfile.open(tar_path) as tar:
-            tar.extractall(path=target_dir)
-            completed_detector.touch()
+    completed_detector = corpus_dir / ".completed"
+    if completed_detector.is_file():
+        logging.info(f"Skipping {dataset_name} because {completed_detector} exists.")
+        return corpus_dir
+    resumable_download(
+        f"http://data.keithito.com/data/speech/{dataset_name}.tar.bz2",
+        filename=tar_path,
+        force_download=force_download,
+    )
+    shutil.rmtree(corpus_dir, ignore_errors=True)
+    with tarfile.open(tar_path) as tar:
+        safe_extract(tar, path=target_dir)
+    completed_detector.touch()
+
+    return corpus_dir
 
 
 def prepare_ljspeech(
-        corpus_dir: Pathlike,
-        output_dir: Optional[Pathlike] = None
+    corpus_dir: Pathlike, output_dir: Optional[Pathlike] = None
 ) -> Dict[str, Union[RecordingSet, SupervisionSet]]:
     """
     Returns the manifests which consist of the Recordings and Supervisions
@@ -58,22 +60,22 @@ def prepare_ljspeech(
     :return: The RecordingSet and SupervisionSet with the keys 'audio' and 'supervisions'.
     """
     corpus_dir = Path(corpus_dir)
-    assert corpus_dir.is_dir(), f'No such directory: {corpus_dir}'
+    assert corpus_dir.is_dir(), f"No such directory: {corpus_dir}"
     if output_dir is not None:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate a mapping: utt_id -> (audio_path, audio_info, text)
-    metadata_csv_path = corpus_dir / 'metadata.csv'
-    assert metadata_csv_path.is_file(), f'No such file: {metadata_csv_path}'
+    metadata_csv_path = corpus_dir / "metadata.csv"
+    assert metadata_csv_path.is_file(), f"No such file: {metadata_csv_path}"
     recordings = []
     supervisions = []
     with open(metadata_csv_path) as f:
         for line in f:
-            recording_id, text, _ = line.split('|')
-            audio_path = corpus_dir / 'wavs' / f'{recording_id}.wav'
+            recording_id, text, normalized = line.split("|")
+            audio_path = corpus_dir / "wavs" / f"{recording_id}.wav"
             if not audio_path.is_file():
-                logging.warning(f'No such file: {audio_path}')
+                logging.warning(f"No such file: {audio_path}")
                 continue
             recording = Recording.from_file(audio_path)
             segment = SupervisionSegment(
@@ -82,9 +84,10 @@ def prepare_ljspeech(
                 start=0.0,
                 duration=recording.duration,
                 channel=0,
-                language='English',
-                gender='female',
-                text=text
+                language="English",
+                gender="female",
+                text=text,
+                custom={"normalized_text": normalized.strip()},
             )
             recordings.append(recording)
             supervisions.append(segment)
@@ -92,11 +95,13 @@ def prepare_ljspeech(
     recording_set = RecordingSet.from_recordings(recordings)
     supervision_set = SupervisionSet.from_segments(supervisions)
 
-    if output_dir is not None:
-        supervision_set.to_json(output_dir / 'supervisions.json')
-        recording_set.to_json(output_dir / 'recordings.json')
+    validate_recordings_and_supervisions(recording_set, supervision_set)
 
-    return {'recordings': recording_set, 'supervisions': supervision_set}
+    if output_dir is not None:
+        supervision_set.to_file(output_dir / "ljspeech_supervisions_all.jsonl.gz")
+        recording_set.to_file(output_dir / "ljspeech_recordings_all.jsonl.gz")
+
+    return {"recordings": recording_set, "supervisions": supervision_set}
 
 
 def feature_extractor() -> TorchaudioFeatureExtractor:
@@ -112,8 +117,8 @@ def feature_extractor() -> TorchaudioFeatureExtractor:
 
 def text_normalizer(segment: SupervisionSegment) -> SupervisionSegment:
     text = segment.text.upper()
-    text = re.sub(r'[^\w !?]', '', text)
-    text = re.sub(r'^\s+', '', text)
-    text = re.sub(r'\s+$', '', text)
-    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r"[^\w !?]", "", text)
+    text = re.sub(r"^\s+", "", text)
+    text = re.sub(r"\s+$", "", text)
+    text = re.sub(r"\s+", " ", text)
     return fastcopy(segment, text=text)
